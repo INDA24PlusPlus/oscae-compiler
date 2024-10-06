@@ -26,20 +26,30 @@
 // BNF
 /*
 
-<segment> ::= <segment> <statement> | <statement>
-<statement> ::= <if_statement> | <return_statement> | <assign_statement> | <statement> <whitespace> | <whitespace> <statement>
-<if_statement> ::= "if " <expr> "{" <segment> "}"
-<return_statement> ::= "return " <expr> ";"
-<assign_statement> ::= <identifier> "=" <expr> ";"
-<expr> ::= <expr> "+" <term> | <expr> "-" <term> | <term>
-<term> ::= <term> "*" <factor> | <term> "/" <factor> | <factor>
-<factor> ::= "(" <expr> ")" | "-" <factor> | <integer> | <identifier> | <factor> <whitespace> | <whitespace> <factor>
+<program> ::= <segment>
+<segment> ::= <segment> <optional_whitespace> <statement> | <statement>
 
-<identifier> ::= <identifier> <char> | <identifier> <digit> | <identifier> <whitespace> | <char>
+<statement> ::= <if_statement> | <break_statement> | <assign_statement> | <loop_statement>
+
+<if_statement> ::= "if" <optional_whitespace> <bool_expr> <optional_whitespace> <block>
+<loop_statement> ::= "loop" <optional_whitespace> <block>
+<break_statement> ::= "break" <optional_whitespace> ";"
+<assign_statement> ::= <identifier> <optional_whitespace> "=" <optional_whitespace> <expr> <optional_whitespace> ";"
+
+<block> ::= "{" <optional_whitespace> <segment> <optional_whitespace> "}"
+
+<bool_expr> ::= <expr> <optional_whitespace> <bool_op> <optional_whitespace> <expr>
+<expr> ::= <expr> <optional_whitespace> "+" <optional_whitespace> <term> | <expr> <optional_whitespace> "-" <optional_whitespace> <term> | <term>
+<term> ::= <term> <optional_whitespace> "*" <optional_whitespace> <factor> | <term> <optional_whitespace> "/" <optional_whitespace> <factor> | <factor>
+<factor> ::= "(" <optional_whitespace> <expr> <optional_whitespace> ")" | "-" <optional_whitespace> <factor> | <integer> | <identifier>
+
+<identifier> ::= <identifier> <char> | <identifier> <digit> | <char>
 <integer> ::= <integer> <digit> | <digit>
 <digit> ::= [0-9]
 <char> ::= [A-Z] | [a-z] | "_"
-<whitespace> ::= " " | "\n"
+<optional_whitespace> ::= (<whitespace>)*
+<whitespace> ::= "\t" | "\n" | " "
+<bool_op> ::= "==" | "<=" | ">=" | "<" | ">"
 
 
  */
