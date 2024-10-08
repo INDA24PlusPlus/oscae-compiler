@@ -7,6 +7,68 @@
             Console.WriteLine("Hello, World!");
         }
 
+
+        static List<Token> Lexer(string code)
+        {
+            List<Token> tokens = new List<Token>();
+
+            string word = "";
+            for (int i = 0; i < code.Length; i++)
+            {
+                char c = code[i];
+
+                if (IsWhitespace(c))
+                {
+                    Token token = GetToken(word);
+                    if (token != Token.None)
+                    {
+                        tokens.Add(token);
+
+                    }
+                }
+                else
+                {
+                    word += c;
+                }
+            }
+
+            return tokens;
+        }
+
+        static Token GetToken(string word)
+        {
+            switch (word) {
+                case "if":
+                    return Token.IF_KEYWORD;
+                case ""
+                default:
+                    return Token.None;
+            }
+        }
+
+        static bool IsWhitespace(char c)
+        {
+            return c == ' ' || c == '\t' || c == '\n';
+        }
+
+        enum Token
+        {
+            IDENTIFIER,
+            IF_KEYWORD,
+            BREAK_KEYWORD,
+            LOOP_KEYWORD,
+            LPAREN,
+            RPAREN,
+            LBRACE,
+            RBRACE,
+            EQUAL,
+            GT,
+            LT,
+            DECIMAL,
+            SEMICOLON,
+            None
+        }
+
         static int Fib(int n)
         {
             int lastlast = 0;
