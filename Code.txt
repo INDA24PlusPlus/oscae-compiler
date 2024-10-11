@@ -1,5 +1,16 @@
-if bruh * bruh < 1{}print bruh;
+n = 5;
+lastlast = 0;
+last = 1;
+loop
+{
+    n = n - 1;
+    if n < 0
+    {
+        break;    
+    }
+    sum = last + lastlast;
 
-loop {}
-break;
-print (14 * 14 + 3) / 4 * -5;
+    lastlast = last;
+    last = sum;
+}
+print lastlast;

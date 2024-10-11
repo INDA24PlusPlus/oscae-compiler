@@ -11,7 +11,7 @@ namespace oscae_compiler
 {
     public class AbstractSyntaxTree
     {
-        public List<Node> nodes = [];
+        public List<StatementNode> nodes = [];
 
         public AbstractSyntaxTree(List<Token> tokens)
         {
@@ -34,7 +34,7 @@ namespace oscae_compiler
 
         static BlockNode ParseBlock(List<Token> tokens, ref int pos)
         {
-            List<Node> nodes = [];
+            List<StatementNode> nodes = [];
 
             if (pos >= tokens.Count || tokens[pos] is not Token.LBrace)
                 throw new ParserException("Expected '{' at token no: " + pos);
@@ -78,14 +78,14 @@ namespace oscae_compiler
 
         }
 
-        static Node ParseStatement(List<Token> tokens, ref int pos)
+        static StatementNode ParseStatement(List<Token> tokens, ref int pos)
         {
             // <statement> ::= <if_statement> | <break_statement> | <assign_statement> | <loop_statement> | <print_statement>
 
             if (tokens.Count <= pos)
                 throw new ParserException("Excpected statement at token no: " + pos);
 
-            Node? node = null;
+            StatementNode? node = null;
             if (tokens[pos] is Token.Identifier identifier) // Assign statement
             {
                 pos++;
@@ -134,7 +134,7 @@ namespace oscae_compiler
             return node;
         }
 
-        static Node ParseExpression(List<Token> tokens, ref int pos)
+        static ExpressionNode ParseExpression(List<Token> tokens, ref int pos)
         {
             List<Token> expression = [];
 
@@ -149,7 +149,7 @@ namespace oscae_compiler
                 pos++;
             }
 
-            List<Node> stack = [];
+            List<ExpressionNode> stack = [];
             List<Token> t = ShuntingYard(expression);
             foreach (Token token in ShuntingYard(expression))
             {
@@ -162,8 +162,8 @@ namespace oscae_compiler
                         stack.Add(new IdentifierNode(identifier.name));
                         break;
                     case Token.Plus:
-                        Node right = Pop(stack);
-                        Node left = Pop(stack);
+                        ExpressionNode right = Pop(stack);
+                        ExpressionNode left = Pop(stack);
                         stack.Add(new AdditionNode(left, right));
                         break;
                     case Token.Minus:
@@ -288,7 +288,7 @@ namespace oscae_compiler
 
         static BoolOpNode ParseCondition(List<Token> tokens, ref int pos)
         {
-            Node left = ParseExpression(tokens, ref pos);
+            ExpressionNode left = ParseExpression(tokens, ref pos);
             if (tokens.Count <= pos)
                 throw new ParserException("Expected comparison at token no " + pos);
 
@@ -303,7 +303,7 @@ namespace oscae_compiler
                 _ => throw new ParserException("Expected a comparative token at token pos no: " + pos),
             };
             pos++;
-            Node right = ParseExpression(tokens, ref pos);
+            ExpressionNode right = ParseExpression(tokens, ref pos);
 
             return new BoolOpNode(left, op, right);
         }
@@ -314,12 +314,13 @@ namespace oscae_compiler
         }
 
         // statement nodes
-        class AssignmentNode : Node
+        public abstract class StatementNode : Node;
+        public class AssignmentNode : StatementNode
         {
             public string Variable { get; }
-            public Node Value { get; }
+            public ExpressionNode Value { get; }
 
-            public AssignmentNode(string variable, Node value)
+            public AssignmentNode(string variable, ExpressionNode value)
             {
                 Variable = variable;
                 Value = value;
@@ -331,8 +332,8 @@ namespace oscae_compiler
                 Value.Print(indent + "  ");
             }
         }
-        
-        class IfNode : Node
+
+        public class IfNode : StatementNode
         {
             public BoolOpNode Condition { get; }
             public BlockNode ThenBranch { get; }
@@ -353,9 +354,9 @@ namespace oscae_compiler
             }
         }
 
-        class LoopNode : Node
+        public class LoopNode : StatementNode
         {
-            BlockNode Body { get; }
+            public BlockNode Body { get; }
             public LoopNode(BlockNode body) => Body = body;
 
             public override void Print(string indent = "")
@@ -365,11 +366,11 @@ namespace oscae_compiler
             }
         }
 
-        class BlockNode : Node
+        public class BlockNode : Node
         {
-            public List<Node> Nodes;
+            public List<StatementNode> Nodes;
 
-            public BlockNode(List<Node> nodes)
+            public BlockNode(List<StatementNode> nodes)
             {
                 Nodes = nodes;
             }
@@ -383,7 +384,7 @@ namespace oscae_compiler
             }
         }
 
-        class BreakNode : Node
+        public class BreakNode : StatementNode
         {
             public override void Print(string indent = "")
             {
@@ -391,10 +392,10 @@ namespace oscae_compiler
             }
         }
 
-        class PrintNode : Node
+        public class PrintNode : StatementNode
         {
-            Node Node { get; }
-            public PrintNode(Node node)
+            public ExpressionNode Node { get; }
+            public PrintNode(ExpressionNode node)
             {
                 Node = node;
             }
@@ -407,11 +408,12 @@ namespace oscae_compiler
         }
 
         // expression nodes
-        class AdditionNode : Node
+        public abstract class ExpressionNode : Node;
+        public class AdditionNode : ExpressionNode
         {
-            Node Left { get; }
-            Node Right { get; }
-            public AdditionNode(Node left, Node right)
+            public ExpressionNode Left { get; }
+            public ExpressionNode Right { get; }
+            public AdditionNode(ExpressionNode left, ExpressionNode right)
             {
                 Left = left;
                 Right = right;
@@ -425,11 +427,11 @@ namespace oscae_compiler
             }
         }
 
-        class SubtractionNode : Node
+        public class SubtractionNode : ExpressionNode
         {
-            Node Left { get; }
-            Node Right { get; }
-            public SubtractionNode(Node left, Node right)
+            public ExpressionNode Left { get; }
+            public ExpressionNode Right { get; }
+            public SubtractionNode(ExpressionNode left, ExpressionNode right)
             {
                 Left = left;
                 Right = right;
@@ -443,11 +445,11 @@ namespace oscae_compiler
             }
         }
 
-        class MultiplicationNode : Node
+        public class MultiplicationNode : ExpressionNode
         {
-            Node Left { get; }
-            Node Right { get; }
-            public MultiplicationNode(Node left, Node right)
+            public ExpressionNode Left { get; }
+            public ExpressionNode Right { get; }
+            public MultiplicationNode(ExpressionNode left, ExpressionNode right)
             {
                 Left = left;
                 Right = right;
@@ -461,11 +463,11 @@ namespace oscae_compiler
             }
         }
 
-        class DivisionNode : Node
+        public class DivisionNode : ExpressionNode
         {
-            Node Left { get; }
-            Node Right { get; }
-            public DivisionNode(Node left, Node right)
+            public ExpressionNode Left { get; }
+            public ExpressionNode Right { get; }
+            public DivisionNode(ExpressionNode left, ExpressionNode right)
             {
                 Left = left;
                 Right = right;
@@ -479,10 +481,10 @@ namespace oscae_compiler
             }
         }
 
-        class UnaryNode : Node
+        public class UnaryNode : ExpressionNode
         {
-            Node Node { get; }
-            public UnaryNode(Node node)
+            public ExpressionNode Node { get; }
+            public UnaryNode(ExpressionNode node)
             {
                 Node = node;
             }
@@ -496,7 +498,7 @@ namespace oscae_compiler
 
         // primitive nodes
 
-        class NumberNode : Node
+        public class NumberNode : ExpressionNode
         {
             public int Value { get; }
             public NumberNode(int value) => Value = value;
@@ -507,7 +509,7 @@ namespace oscae_compiler
             }
         }
 
-        class IdentifierNode : Node
+        public class IdentifierNode : ExpressionNode
         {
             public string Value { get; }
             public IdentifierNode(string value) => Value = value;
@@ -518,12 +520,12 @@ namespace oscae_compiler
             }
         }
 
-        class BoolOpNode : Node
+        public class BoolOpNode : Node
         {
             public Operator Op { get; }
-            public Node Left { get; }
-            public Node Right { get; }
-            public BoolOpNode(Node left, Operator op, Node right)
+            public ExpressionNode Left { get; }
+            public ExpressionNode Right { get; }
+            public BoolOpNode(ExpressionNode left, Operator op, ExpressionNode right)
             {
                 Left = left;
                 Op = op;

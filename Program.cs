@@ -26,17 +26,23 @@ namespace oscae_compiler
             }
             Console.WriteLine();
 
-            AbstractSyntaxTree? abstractSyntaxTree = null;
+            AbstractSyntaxTree? ast = null;
 
             try
             {
-                abstractSyntaxTree = new(tokens);
+                ast = new(tokens);
             }
             catch (AbstractSyntaxTree.ParserException ex)
             {
                 ex.Print();
             }
-            abstractSyntaxTree?.Print();
+            ast?.Print();
+
+            if (ast != null)
+            {
+                Console.WriteLine("Executing with Interpreter:");
+                Interpreter.Interpret(ast);
+            }
         }
 
         
@@ -87,7 +93,7 @@ namespace oscae_compiler
 <bool_op> ::= "==" | "<=" | ">=" | "<" | ">" | "!="
 
 
- */
+*/
 
 // Goal
 /*
