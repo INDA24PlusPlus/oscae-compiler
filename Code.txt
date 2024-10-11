@@ -1,5 +1,4 @@
-n = 5;
-lastlast = 0;
+n = 7;
 last = 1;
 loop
 {
