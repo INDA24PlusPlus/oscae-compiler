@@ -1,0 +1,5 @@
+if bruh * bruh < 1{}print bruh;
+
+loop {}
+break;
+print (14 * 14 + 3) / 4 * -5;

@@ -11,12 +11,13 @@ namespace oscae_compiler
 {
     public class AbstractSyntaxTree
     {
-        public List<Node> nodes = new List<Node>();
+        public List<Node> nodes = [];
 
         public AbstractSyntaxTree(List<Token> tokens)
         {
             int pos = 0;
 
+            // Segment
             while (pos < tokens.Count)
             {
                 nodes.Add(ParseStatement(tokens, ref pos));
@@ -33,17 +34,25 @@ namespace oscae_compiler
 
         static BlockNode ParseBlock(List<Token> tokens, ref int pos)
         {
-            List<Node> nodes = new List<Node>();
+            List<Node> nodes = [];
 
-            if (tokens[pos] is not Token.LBrace)
-                throw new Exception();
+            if (pos >= tokens.Count || tokens[pos] is not Token.LBrace)
+                throw new ParserException("Expected '{' at token no: " + pos);
 
             pos++;
+
+            if (pos >= tokens.Count)
+                throw new ParserException("Expected statement or '}' at token no: " + pos);
 
             while (tokens[pos] is not Token.RBrace)
             {
                 nodes.Add(ParseStatement(tokens, ref pos));
+                if (pos >= tokens.Count)
+                    throw new ParserException("Expected statement or '}' at token no: " + pos);
             }
+
+            if (pos >= tokens.Count || tokens[pos] is not Token.RBrace)
+                throw new ParserException("Expected '}' at token no: " + pos);
 
             pos++;
             return new BlockNode(nodes);
@@ -71,47 +80,56 @@ namespace oscae_compiler
 
         static Node ParseStatement(List<Token> tokens, ref int pos)
         {
-            Node node = null;
-            if (tokens[pos] is Token.Identifier identifier) // has to be assigment
-            {
-                if (tokens[pos + 1] is not Token.Equal)
-                    throw new Exception();
+            // <statement> ::= <if_statement> | <break_statement> | <assign_statement> | <loop_statement> | <print_statement>
 
-                pos += 2;
+            if (tokens.Count <= pos)
+                throw new ParserException("Excpected statement at token no: " + pos);
+
+            Node? node = null;
+            if (tokens[pos] is Token.Identifier identifier) // Assign statement
+            {
+                pos++;
+                if (pos >= tokens.Count || tokens[pos] is not Token.Equal)
+                    throw new ParserException("Expected '=' at token no: " + pos);
+
+                pos++;
                 node = new AssignmentNode(identifier.name, ParseExpression(tokens, ref pos));
 
-                if (tokens[pos] is not Token.Semicolon) // expecting ;
-                    throw new Exception();
+                if (pos >= tokens.Count || tokens[pos] is not Token.Semicolon) // expecting ;
+                    throw new ParserException("Expected ';' at token no: " + pos);
                 pos += 1;
             }
-            else if (tokens[pos] is Token.IfKeyword)
+            else if (tokens[pos] is Token.IfKeyword)        // If statement
             {
                 pos += 1;
                 node = new IfNode(ParseCondition(tokens, ref pos), ParseBlock(tokens, ref pos));
             }
-            else if (tokens[pos] is Token.LoopKeyword)
+            else if (tokens[pos] is Token.LoopKeyword)      // Loop statement
             {
                 pos += 1;
                 node = new LoopNode(ParseBlock(tokens, ref pos));
             }
-            else if (tokens[pos] is Token.BreakKeyword)
+            else if (tokens[pos] is Token.BreakKeyword)     // Break statement
             {
                 pos += 1;
                 node = new BreakNode();
 
-                if (tokens[pos] is not Token.Semicolon) // expecting ;
-                    throw new Exception();
+                if (pos >= tokens.Count || tokens[pos] is not Token.Semicolon) // expecting ;
+                    throw new ParserException("Expected ';' at token no: " + pos);
                 pos += 1;
             }
-            else if (tokens[pos] is Token.PrintKeyword)
+            else if (tokens[pos] is Token.PrintKeyword)     // Print statement
             {
                 pos += 1;
                 node = new PrintNode(ParseExpression(tokens, ref pos));
 
-                if (tokens[pos] is not Token.Semicolon) // expecting ;
-                    throw new Exception();
+                if (pos >= tokens.Count || tokens[pos] is not Token.Semicolon) // expecting ;
+                    throw new ParserException("Expected ';' at token no: " + pos);
                 pos += 1;
             }
+
+            if (node == null)
+                throw new ParserException("Expected statement at token no " + pos);
 
             return node;
         }
@@ -124,11 +142,15 @@ namespace oscae_compiler
                 tokens[pos] is Token.Plus || tokens[pos] is Token.Minus || tokens[pos] is Token.Star ||
                 tokens[pos] is Token.Slash || tokens[pos] is Token.LParen || tokens[pos] is Token.RParen))
             {
-                expression.Add(tokens[pos]);
+                if (tokens[pos] is Token.Minus && (expression.Count == 0 || expression[^1] is Token.Operator))
+                    expression.Add(new Unary());
+                else
+                    expression.Add(tokens[pos]);
                 pos++;
             }
 
             List<Node> stack = [];
+            List<Token> t = ShuntingYard(expression);
             foreach (Token token in ShuntingYard(expression))
             {
                 switch (token)
@@ -159,8 +181,13 @@ namespace oscae_compiler
                         left = Pop(stack);
                         stack.Add(new DivisionNode(left, right));
                         break;
+                    case Unary:
+                        stack.Add(new UnaryNode(Pop(stack)));
+                        break;
                 }
             }
+            if (stack.Count != 1)
+                throw new ParserException("Expected expression at token pos no " + pos);
             return stack[0];
         }
 
@@ -192,6 +219,7 @@ namespace oscae_compiler
                                 result.Add(popped);
                         }
                         break;
+                    // left-associative
                     case Token.Star:
                     case Token.Slash:
                     case Token.Plus:
@@ -201,7 +229,21 @@ namespace oscae_compiler
                         else
                         {
                             int incomingPrecedance = Precedance(token);
-                            while (incomingPrecedance <= Precedance(stack[^1]))
+                            while (stack.Count > 0 && incomingPrecedance <= Precedance(stack[^1]))
+                            {
+                                result.Add(Pop(stack));
+                            }
+                            stack.Add(token);
+                        }
+                        break;
+                    // right-associative
+                    case Unary:
+                        if (stack.Count == 0 || stack[^1] is Token.LParen)
+                            stack.Add(token);
+                        else
+                        {
+                            int incomingPrecedance = Precedance(token);
+                            while (stack.Count > 0 && incomingPrecedance < Precedance(stack[^1]))
                             {
                                 result.Add(Pop(stack));
                             }
@@ -230,6 +272,8 @@ namespace oscae_compiler
                 case Token.Star:
                 case Token.Slash:
                     return 2;
+                case Unary:
+                    return 3;
                 default:
                     return 0;
             }
@@ -245,6 +289,9 @@ namespace oscae_compiler
         static BoolOpNode ParseCondition(List<Token> tokens, ref int pos)
         {
             Node left = ParseExpression(tokens, ref pos);
+            if (tokens.Count <= pos)
+                throw new ParserException("Expected comparison at token no " + pos);
+
             var op = tokens[pos] switch
             {
                 Token.EQ => BoolOpNode.Operator.EQ,
@@ -253,7 +300,7 @@ namespace oscae_compiler
                 Token.GTE => BoolOpNode.Operator.GTE,
                 Token.LT => BoolOpNode.Operator.LT,
                 Token.LTE => BoolOpNode.Operator.LTE,
-                _ => throw new Exception(),
+                _ => throw new ParserException("Expected a comparative token at token pos no: " + pos),
             };
             pos++;
             Node right = ParseExpression(tokens, ref pos);
@@ -432,17 +479,17 @@ namespace oscae_compiler
             }
         }
 
-        class NegateNode : Node
+        class UnaryNode : Node
         {
             Node Node { get; }
-            public NegateNode(Node node)
+            public UnaryNode(Node node)
             {
                 Node = node;
             }
 
             public override void Print(string indent = "")
             {
-                Console.WriteLine(indent + "Negate:");
+                Console.WriteLine(indent + "Unary:");
                 Node.Print(indent + "  ");
             }
         }
@@ -500,5 +547,21 @@ namespace oscae_compiler
                 LTE,
             }
         }
+
+        public class ParserException : Exception
+        {
+            string ex = "";
+            public ParserException(string ex = "Parser exception")
+            {
+                this.ex = ex;
+            }
+
+            public void Print()
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+        class Unary : Token { }
     }
 }

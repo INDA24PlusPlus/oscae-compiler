@@ -56,27 +56,34 @@ namespace oscae_compiler
             }
         }
 
+        
         public class IfKeyword : Token { }
         public class LoopKeyword : Token { }
         public class BreakKeyword : Token { }
         public class PrintKeyword : Token { }
-        public class LParen : Token { }
-        public class RParen : Token { }
+
+        public abstract class Paren : Token;
+        public class LParen : Paren { }
+        public class RParen : Paren { }
         public class LBrace : Token { }
         public class RBrace : Token { }
-        public class Equal : Token { } // a single equal (assign operation)
-        public class Plus : Token { }
-        public class Minus : Token { }
-        public class Star : Token { }
-        public class Slash : Token { }
+
+        public abstract class Operator : Token;
+        public class Equal : Operator { } // a single equal (assign operation)
+        public class Plus : Operator { }
+        public class Minus : Operator { }
+        public class Star : Operator { }
+        public class Slash : Operator { }
         public class Semicolon : Token { }
 
         // boolean operations
-        public class EQ : Token { }
-        public class NEQ : Token { }
-        public class GT : Token { }
-        public class GTE : Token { }
-        public class LT : Token { }
-        public class LTE : Token { }
+
+        public abstract class Comparator : Token;
+        public class EQ : Comparator { }
+        public class NEQ : Comparator { }
+        public class GT : Comparator { }
+        public class GTE : Comparator { }
+        public class LT : Comparator { }
+        public class LTE : Comparator { }
     }
 }
