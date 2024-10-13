@@ -1,0 +1,15 @@
+n = 7;
+last = 1;
+loop
+{
+    n = n - 1;
+    if n < 0
+    {
+        break;    
+    }
+    sum = last + lastlast;
+
+    lastlast = last;
+    last = sum;
+}
+print lastlast;

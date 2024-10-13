@@ -11,11 +11,13 @@ namespace oscae_compiler
             Console.WriteLine("--------------CODE--------------");
 
 
-            string code = File.ReadAllText("..\\..\\..\\code.txt");
+            //string code = File.ReadAllText("..\\..\\..\\Code.txt");
+            //string code = File.ReadAllText("..\\..\\..\\Fibonacci.txt");
+            string code = File.ReadAllText("..\\..\\..\\MathTest.txt");
             Console.WriteLine(code);
 
 
-            Console.WriteLine("--------------------------------");
+            Console.WriteLine("--------------TOKENS------------");
 
             List<Token>? tokens = Lexer.Tokenize(code);
             if (tokens == null) return;
@@ -26,6 +28,7 @@ namespace oscae_compiler
             }
             Console.WriteLine();
 
+            Console.WriteLine("--------------AST---------------");
             AbstractSyntaxTree? ast = null;
 
             try
@@ -37,6 +40,8 @@ namespace oscae_compiler
                 ex.Print();
             }
             ast?.Print();
+
+            Console.WriteLine("--------------EXEC--------------");
 
             if (ast != null)
             {
