@@ -12,8 +12,8 @@ namespace oscae_compiler
 
 
             //string code = File.ReadAllText("..\\..\\..\\Code.txt");
-            //string code = File.ReadAllText("..\\..\\..\\Fibonacci.txt");
-            string code = File.ReadAllText("..\\..\\..\\MathTest.txt");
+            string code = File.ReadAllText("..\\..\\..\\Fibonacci.txt");
+            //string code = File.ReadAllText("..\\..\\..\\MathTest.txt");
             Console.WriteLine(code);
 
 

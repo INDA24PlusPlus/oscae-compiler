@@ -14,16 +14,16 @@ namespace oscae_compiler
     {
         public static void Transpile(AbstractSyntaxTree ast, string outFilePath)
         {
-            List<string> vars = [];
+            HashSet<string> vars = [];
             string code = "";
 
             Transpile(ast.nodes, vars, ref code);
 
             // program
-            string program = "#include <std.io>\n\nint main() {\n";
+            string program = "#include <stdio.h>\n\nint main() {\n";
             foreach (string var in vars)
             {
-                program += var + " = 0;\n    ";
+                program += "    int " + var + " = 0;\n";
             }
             program += code + "    return 0;\n}";
 
@@ -31,7 +31,7 @@ namespace oscae_compiler
         }
 
         // returns false if exited by a break statement, otherwise true
-        static void Transpile(List<StatementNode> nodes, List<string> vars, ref string code, string indent = "    ")
+        static void Transpile(List<StatementNode> nodes, HashSet<string> vars, ref string code, string indent = "    ")
         {
             foreach (StatementNode _node in nodes)
             {
@@ -58,7 +58,7 @@ namespace oscae_compiler
                         break;
 
                     case LoopNode node:
-                        code += "while (true) {\n";
+                        code += "while (1) {\n";
                         Transpile(node.Body.Nodes, vars, ref code, indent + "    ");
                         code += indent + "}";
                         break;
@@ -68,7 +68,7 @@ namespace oscae_compiler
                         break;
 
                     case PrintNode node:
-                        code += "printf(";
+                        code += "printf(\"%d\\n\", ";
                         Transpile(node.Node, vars, ref code);
                         code += ");\n";
                         break;
@@ -78,11 +78,12 @@ namespace oscae_compiler
         }
 
         // transpile expression
-        static void Transpile(ExpressionNode _node, List<string> vars, ref string code, ExpressionNode? parentNode = null)
+        static void Transpile(ExpressionNode _node, HashSet<string> vars, ref string code, ExpressionNode? parentNode = null)
         {
             switch (_node)
             {
                 case IdentifierNode node:
+                    vars.Add(node.Value);
                     code += node.Value;
                     break;
                 case NumberNode node:
