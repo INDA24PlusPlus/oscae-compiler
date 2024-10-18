@@ -47,6 +47,7 @@ namespace oscae_compiler
             {
                 Console.WriteLine("Executing with Interpreter:");
                 Interpreter.Interpret(ast);
+                Transpiler.Transpile(ast, "out.c");
             }
         }
 
