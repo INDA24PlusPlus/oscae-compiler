@@ -86,8 +86,9 @@ namespace oscae_compiler
 
 <bool_expr> ::= <expr> <optional_whitespace> <bool_op> <optional_whitespace> <expr>
 <expr> ::= <expr> <optional_whitespace> "+" <optional_whitespace> <term> | <expr> <optional_whitespace> "-" <optional_whitespace> <term> | <term>
-<term> ::= <term> <optional_whitespace> "*" <optional_whitespace> <factor> | <term> <optional_whitespace> "/" <optional_whitespace> <factor> | <factor>
-<factor> ::= "(" <optional_whitespace> <expr> <optional_whitespace> ")" | "-" <optional_whitespace> <factor> | <integer> | <identifier>
+<term> ::= <term> <optional_whitespace> "*" <optional_whitespace> <unary> | <term> <optional_whitespace> "/" <optional_whitespace> <unary> | <unary>
+<unary> ::= "-" <optional_whitespace> <factor> | <factor>
+<factor> ::= "(" <optional_whitespace> <expr> <optional_whitespace> ")" | <integer> | <identifier>
 
 <identifier> ::= <identifier> <char> | <identifier> <digit> | <char>
 <integer> ::= <integer> <digit> | <digit>

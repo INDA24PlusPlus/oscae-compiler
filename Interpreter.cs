@@ -18,7 +18,7 @@ namespace oscae_compiler
 
         class Variables
         {
-            Dictionary<string, int> variables = [];
+            readonly Dictionary<string, int> variables = [];
 
             public int this[string variable]
             {
@@ -36,30 +36,30 @@ namespace oscae_compiler
         }
 
         // returns false if exited by a break statement, otherwise true
-        static bool Eval(List<AbstractSyntaxTree.StatementNode> nodes, Variables variables)
+        static bool Eval(List<StatementNode> nodes, Variables variables)
         {
-            foreach (AbstractSyntaxTree.StatementNode _node in nodes)
+            foreach (StatementNode _node in nodes)
             {
                 switch (_node)
                 {
-                    case AbstractSyntaxTree.AssignmentNode node:
+                    case AssignmentNode node:
                         variables[node.Variable] = Eval(node.Value, variables);
                         break;
 
-                    case AbstractSyntaxTree.IfNode node:
+                    case IfNode node:
                         if (Eval(node.Condition, variables))
                             if (!Eval(node.ThenBranch.Nodes, variables))
                                 return false;
                         break;
 
-                    case AbstractSyntaxTree.LoopNode node:
+                    case LoopNode node:
                         while (Eval(node.Body.Nodes, variables));
                         break;
 
-                    case AbstractSyntaxTree.BreakNode node:
+                    case BreakNode node:
                         return false;
 
-                    case AbstractSyntaxTree.PrintNode node:
+                    case PrintNode node:
                         Console.WriteLine(Eval(node.Node, variables));
                         break;
                 }
@@ -69,38 +69,38 @@ namespace oscae_compiler
         }
         
 
-        static int Eval(AbstractSyntaxTree.ExpressionNode _node, Variables variables)
+        static int Eval(ExpressionNode _node, Variables variables)
         {
             switch (_node)
             {
-                case AbstractSyntaxTree.IdentifierNode node:
+                case IdentifierNode node:
                     return variables[node.Value];
-                case AbstractSyntaxTree.NumberNode node:
+                case NumberNode node:
                     return node.Value;
-                case AbstractSyntaxTree.AdditionNode node:
+                case AdditionNode node:
                     return Eval(node.Left, variables) + Eval(node.Right, variables);
-                case AbstractSyntaxTree.SubtractionNode node:
+                case SubtractionNode node:
                     return Eval(node.Left, variables) - Eval(node.Right, variables);
-                case AbstractSyntaxTree.MultiplicationNode node:
+                case MultiplicationNode node:
                     return Eval(node.Left, variables) * Eval(node.Right, variables);
-                case AbstractSyntaxTree.DivisionNode node:
+                case DivisionNode node:
                     return Eval(node.Left, variables) / Eval(node.Right, variables);
-                case AbstractSyntaxTree.UnaryNode node:
+                case UnaryNode node:
                     return -Eval(node.Node, variables);
             }
             return 0;
         }
 
-        static bool Eval(AbstractSyntaxTree.BoolOpNode node, Variables variables)
+        static bool Eval(BoolOpNode node, Variables variables)
         {
             return node.Op switch
             {
-                AbstractSyntaxTree.BoolOpNode.Operator.EQ => Eval(node.Left, variables) == Eval(node.Right, variables),
-                AbstractSyntaxTree.BoolOpNode.Operator.NEQ => Eval(node.Left, variables) != Eval(node.Right, variables),
-                AbstractSyntaxTree.BoolOpNode.Operator.GT => Eval(node.Left, variables) > Eval(node.Right, variables),
-                AbstractSyntaxTree.BoolOpNode.Operator.GTE => Eval(node.Left, variables) >= Eval(node.Right, variables),
-                AbstractSyntaxTree.BoolOpNode.Operator.LT => Eval(node.Left, variables) < Eval(node.Right, variables),
-                AbstractSyntaxTree.BoolOpNode.Operator.LTE => Eval(node.Left, variables) <= Eval(node.Right, variables),
+                BoolOpNode.Operator.EQ => Eval(node.Left, variables) == Eval(node.Right, variables),
+                BoolOpNode.Operator.NEQ => Eval(node.Left, variables) != Eval(node.Right, variables),
+                BoolOpNode.Operator.GT => Eval(node.Left, variables) > Eval(node.Right, variables),
+                BoolOpNode.Operator.GTE => Eval(node.Left, variables) >= Eval(node.Right, variables),
+                BoolOpNode.Operator.LT => Eval(node.Left, variables) < Eval(node.Right, variables),
+                BoolOpNode.Operator.LTE => Eval(node.Left, variables) <= Eval(node.Right, variables),
                 _ => false,
             };
         }

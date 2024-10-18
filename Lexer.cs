@@ -48,7 +48,7 @@ namespace oscae_compiler
                     {
                         c = code[i];
 
-                        if (!IsOperator(c))
+                        if (!IsBoolOperator(c))
                             break;
 
                         word += c;
@@ -197,6 +197,11 @@ namespace oscae_compiler
         static bool IsOperator(char c)
         {
             return c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == '!' || c == '<' || c == '>';
+        }
+        
+        static bool IsBoolOperator(char c)
+        {
+            return c == '=' || c == '!' || c == '<' || c == '>';
         }
 
         static bool IsWhitespace(char c)

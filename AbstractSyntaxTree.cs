@@ -142,15 +142,32 @@ namespace oscae_compiler
                 tokens[pos] is Token.Plus || tokens[pos] is Token.Minus || tokens[pos] is Token.Star ||
                 tokens[pos] is Token.Slash || tokens[pos] is Token.LParen || tokens[pos] is Token.RParen))
             {
-                if (tokens[pos] is Token.Minus && (expression.Count == 0 || expression[^1] is Token.Operator))
-                    expression.Add(new Unary());
+                if (expression.Count == 0 || expression[^1] is Token.Operator or Unary or Token.LParen) // Unary is not Token.Operator
+                {
+                    // only allow identifiers, numbers, lparen and unary
+                    if (tokens[pos] is Token.Minus)
+                    {
+                        if (expression[^1] is Unary) // A unary is not allowed after a unary
+                            throw new ParserException("Expected Identifier, Number or '(' at token no: " + pos);
+                        expression.Add(new Unary());
+                    }
+                    else if (tokens[pos] is Token.Identifier or Token.Number or Token.LParen)
+                        expression.Add(tokens[pos]);
+                    else
+                        throw new ParserException("Expected Identifier, Number, '(' or Unary operator at token no: " + pos);
+                }
                 else
-                    expression.Add(tokens[pos]);
+                {
+                    // only allow operators (not unary) and rparen
+                    if (tokens[pos] is Token.Operator or Token.RParen)
+                        expression.Add(tokens[pos]);
+                    else
+                        throw new ParserException("Expected Operator or ')' at token no: " + pos);
+                }
                 pos++;
             }
 
             List<ExpressionNode> stack = [];
-            List<Token> t = ShuntingYard(expression);
             foreach (Token token in ShuntingYard(expression))
             {
                 switch (token)
